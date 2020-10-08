@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import docking.widgets.EventTrigger;
 import ghidra.app.events.*;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginEvent;
@@ -38,7 +39,7 @@ import ghidra.util.Swing;
 public abstract class AddressBasedGraphDisplayListener
 		implements GraphDisplayListener, PluginEventListener, DomainObjectListener {
 
-	private PluginTool tool;
+	protected PluginTool tool;
 	private GraphDisplay graphDisplay;
 	protected Program program;
 	private SymbolTable symbolTable;
@@ -62,7 +63,7 @@ public abstract class AddressBasedGraphDisplayListener
 	}
 
 	@Override
-	public void locationChanged(String vertexId) {
+	public void locationFocusChanged(String vertexId) {
 		Address address = getAddressForVertexId(vertexId);
 		if (address != null) {
 			ProgramLocation location = new ProgramLocation(program, address);
@@ -98,7 +99,9 @@ public abstract class AddressBasedGraphDisplayListener
 			ProgramLocationPluginEvent ev = (ProgramLocationPluginEvent) event;
 			if (isMyProgram(ev.getProgram())) {
 				ProgramLocation location = ev.getLocation();
-				graphDisplay.setLocation(getVertexIdForAddress(location.getAddress()));
+				String id = getVertexIdForAddress(location.getAddress());
+				// update graph location, but tell it not to send out event
+				graphDisplay.setLocationFocus(id, EventTrigger.INTERNAL_ONLY);
 			}
 		}
 		else if (event instanceof ProgramSelectionPluginEvent) {
@@ -107,7 +110,8 @@ public abstract class AddressBasedGraphDisplayListener
 				ProgramSelection selection = ev.getSelection();
 				List<String> selectedVertices = getVertices(selection);
 				if (selectedVertices != null) {
-					graphDisplay.selectVertices(selectedVertices);
+					// since we are responding to an event, tell the GraphDisplay not to send event
+					graphDisplay.selectVertices(selectedVertices, EventTrigger.INTERNAL_ONLY);
 				}
 			}
 		}

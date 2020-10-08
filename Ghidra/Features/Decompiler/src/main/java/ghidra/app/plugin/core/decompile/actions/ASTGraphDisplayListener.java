@@ -17,6 +17,7 @@ package ghidra.app.plugin.core.decompile.actions;
 
 import static ghidra.app.plugin.core.decompile.actions.ASTGraphTask.GraphType.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import ghidra.app.plugin.core.decompile.actions.ASTGraphTask.GraphType;
@@ -26,6 +27,8 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.pcode.HighFunction;
 import ghidra.program.model.pcode.PcodeBlockBasic;
 import ghidra.service.graph.GraphDisplay;
+import ghidra.service.graph.GraphDisplayListener;
+import ghidra.util.exception.AssertException;
 
 /**
  * Listener for when an AST graph's nodes are selected.
@@ -43,7 +46,19 @@ public class ASTGraphDisplayListener extends AddressBasedGraphDisplayListener {
 
 	@Override
 	protected List<String> getVertices(AddressSetView selection) {
-		return null;
+		if (graphType != CONTROL_FLOW_GRAPH) {
+			return null;
+		}
+		List<String> vertices = new ArrayList<>();
+		List<PcodeBlockBasic> blocks = hfunction.getBasicBlocks();
+		for (PcodeBlockBasic block : blocks) {
+			Address start = block.getStart();
+			Address stop = block.getStop();
+			if (selection.intersects(start, stop)) {
+				vertices.add(Integer.toString(block.getIndex()));
+			}
+		}
+		return vertices;
 	}
 
 	@Override
@@ -53,7 +68,6 @@ public class ASTGraphDisplayListener extends AddressBasedGraphDisplayListener {
 		}
 
 		AddressSet set = new AddressSet();
-		Address location = null;
 		List<PcodeBlockBasic> blocks = hfunction.getBasicBlocks();
 		for (String vertixId : vertexIds) {
 			try {
@@ -61,9 +75,6 @@ public class ASTGraphDisplayListener extends AddressBasedGraphDisplayListener {
 				PcodeBlockBasic block = blocks.get(index);
 				Address start = block.getStart();
 				set.addRange(start, block.getStop());
-				if (location == null || start.compareTo(location) < 0) {
-					location = start;
-				}
 			}
 			catch (NumberFormatException e) {
 				// continue
@@ -90,7 +101,21 @@ public class ASTGraphDisplayListener extends AddressBasedGraphDisplayListener {
 
 	@Override
 	protected Address getAddressForVertexId(String vertexId) {
-		return null;
+		List<PcodeBlockBasic> blocks = hfunction.getBasicBlocks();
+
+		try {
+			int index = Integer.parseInt(vertexId);
+			PcodeBlockBasic block = blocks.get(index);
+			return block.getStart();
+		}
+		catch (NumberFormatException e) {
+			throw new AssertException("Bad vertex id, expected a number but got " + vertexId);
+		}
+	}
+
+	@Override
+	public GraphDisplayListener cloneWith(GraphDisplay graphDisplay) {
+		return new ASTGraphDisplayListener(tool, graphDisplay, hfunction, graphType);
 	}
 
 }

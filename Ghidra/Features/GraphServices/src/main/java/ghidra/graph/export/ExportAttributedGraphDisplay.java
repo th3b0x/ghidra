@@ -15,10 +15,12 @@
  */
 package ghidra.graph.export;
 
-import java.util.List;
+import java.util.*;
 
 import org.jgrapht.Graph;
 
+import docking.action.DockingAction;
+import docking.widgets.EventTrigger;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.service.graph.*;
 import ghidra.util.Swing;
@@ -34,7 +36,7 @@ import ghidra.util.task.TaskMonitor;
  */
 class ExportAttributedGraphDisplay implements GraphDisplay {
 
-	private PluginTool pluginTool;
+	private final PluginTool pluginTool;
 	private String description;
 
 	/**
@@ -56,12 +58,12 @@ class ExportAttributedGraphDisplay implements GraphDisplay {
 	}
 
 	@Override
-	public void selectVertices(List<String> vertexList) {
+	public void selectVertices(List<String> vertexList, EventTrigger eventTrigger) {
 		// This display is not interactive, so N/A
 	}
 
 	@Override
-	public void setLocation(String vertexID) {
+	public void setLocationFocus(String vertexID, EventTrigger eventTrigger) {
 		// This display is not interactive, so N/A
 	}
 
@@ -113,6 +115,21 @@ class ExportAttributedGraphDisplay implements GraphDisplay {
 	@Override
 	public String getGraphDescription() {
 		return description;
+	}
+
+	@Override
+	public void addAction(DockingAction action) {
+		// do nothing, actions are not supported by this display
+	}
+
+	@Override
+	public String getFocusedVertexId() {
+		return null;
+	}
+
+	@Override
+	public Set<String> getSelectedVertexIds() {
+		return Collections.emptySet();
 	}
 
 }

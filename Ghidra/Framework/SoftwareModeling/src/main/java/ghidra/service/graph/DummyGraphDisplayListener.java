@@ -30,8 +30,13 @@ public class DummyGraphDisplayListener implements GraphDisplayListener {
 	}
 
 	@Override
-	public void locationChanged(String vertexId) {
+	public void locationFocusChanged(String vertexId) {
 		// I'm a dummy
+	}
+
+	@Override
+	public GraphDisplayListener cloneWith(GraphDisplay graphDisplay) {
+		return new DummyGraphDisplayListener();
 	}
 
 }
